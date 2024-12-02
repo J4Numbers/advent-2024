@@ -1,0 +1,27 @@
+{
+  "name": "aoc-2024-day-02",
+  "version": "1.0.0",
+  "description": "Day 2 of advent of code 2024",
+  "main": "bin/app.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/J4Numbers/advent-2024.git"
+  },
+  "keywords": [
+    "AoC",
+    "Advent"
+  ],
+  "author": "J4Numbers <J4numbers@gmail.com>",
+  "license": "0BSD",
+  "bugs": {
+    "url": "https://github.com/J4Numbers/advent-2024/issues"
+  },
+  "homepage": "https://github.com/J4Numbers/advent-2024#readme",
+  "dependencies": {
+    "yargs": "^17.7.2"
+  }
+}
