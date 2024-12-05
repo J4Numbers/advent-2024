@@ -7,7 +7,7 @@ import * as fs from 'fs';
 
 const argsEngine = yargs(hideBin(process.argv));
 const args = argsEngine.wrap(argsEngine.terminalWidth())
-  .env('J4_ADVENT_1')
+  .env('J4_ADVENT_02')
   .options({
     input: {
       alias: 'i',
