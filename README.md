@@ -8,4 +8,4 @@ well documented depending on the option in question.
 Languages included so far:
 
 * Javascript (Day 1, 2, 3, 4, & 5)
-* Go (Day 6, 7)
+* Go (Day 6, 7, 8)
