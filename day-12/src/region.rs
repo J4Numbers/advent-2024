@@ -1,15 +1,20 @@
-use std::collections::HashMap;
-use log::log;
-
 #[derive(Hash, Eq, PartialEq, Debug, Clone, Copy)]
 struct Coordinate {
-    x: i8,
-    y: i8,
+    x: i32,
+    y: i32,
+}
+
+#[derive(Hash, Eq, PartialEq, Debug)]
+struct ExposedSides {
+    up: bool,
+    down: bool,
+    left: bool,
+    right: bool,
 }
 
 #[derive(Hash, Eq, PartialEq, Debug)]
 struct SubRegion {
-    exposed_sides: usize,
+    exposed_sides: ExposedSides,
     coordinate: Coordinate,
 }
 
@@ -20,8 +25,8 @@ struct RegionMap {
 }
 
 fn test_coord_in_map(coordinate: Coordinate, max_height: usize, max_width: usize) -> bool {
-    coordinate.y >= 0 && coordinate.y < max_height as i8 &&
-        coordinate.x >= 0 && coordinate.x < max_width as i8
+    coordinate.y >= 0 && coordinate.y < max_height as i32 &&
+        coordinate.x >= 0 && coordinate.x < max_width as i32
 }
 
 fn explore_region(region_base_map: &Vec<Vec<char>>, start_loc: Coordinate) -> RegionMap {
@@ -32,7 +37,7 @@ fn explore_region(region_base_map: &Vec<Vec<char>>, start_loc: Coordinate) -> Re
 
     while !coords_to_explore.last().is_none() {
         let coord_to_test = coords_to_explore.pop().unwrap();
-        let mut exposed_sides: usize = 0;
+        let mut exposed_sides = ExposedSides{up: false, down: false, left: false, right: false};
 
         let up = Coordinate{ x: coord_to_test.x, y: coord_to_test.y - 1 };
         if test_coord_in_map(up, region_base_map.len(), region_base_map.get(0).unwrap().len())
@@ -41,7 +46,7 @@ fn explore_region(region_base_map: &Vec<Vec<char>>, start_loc: Coordinate) -> Re
                 coords_to_explore.push(up)
             }
         } else {
-            exposed_sides += 1;
+            exposed_sides.up = true;
         }
 
         let down = Coordinate{ x: coord_to_test.x, y: coord_to_test.y + 1 };
@@ -51,7 +56,7 @@ fn explore_region(region_base_map: &Vec<Vec<char>>, start_loc: Coordinate) -> Re
                 coords_to_explore.push(down)
             }
         } else {
-            exposed_sides += 1;
+            exposed_sides.down = true;
         }
 
         let left = Coordinate{ x: coord_to_test.x - 1, y: coord_to_test.y };
@@ -61,7 +66,7 @@ fn explore_region(region_base_map: &Vec<Vec<char>>, start_loc: Coordinate) -> Re
                 coords_to_explore.push(left)
             }
         } else {
-            exposed_sides += 1;
+            exposed_sides.left = true;
         }
 
         let right = Coordinate{ x: coord_to_test.x + 1, y: coord_to_test.y };
@@ -71,7 +76,7 @@ fn explore_region(region_base_map: &Vec<Vec<char>>, start_loc: Coordinate) -> Re
                 coords_to_explore.push(right)
             }
         } else {
-            exposed_sides += 1;
+            exposed_sides.right = true;
         }
 
         sub_regions.push(SubRegion{
@@ -100,33 +105,143 @@ fn test_coord_in_regions(region_map: &Vec<RegionMap>, coordinate: Coordinate) ->
     found
 }
 
-fn calculate_region_cost(region_map: &RegionMap) -> u64 {
+fn count_exposed_sides(exposed_sides: &ExposedSides) -> i32 {
+    let mut exposed: i32 = 0;
+    if exposed_sides.up {
+        exposed += 1;
+    }
+    if exposed_sides.down {
+        exposed += 1;
+    }
+    if exposed_sides.left {
+        exposed += 1;
+    }
+    if exposed_sides.right {
+        exposed += 1;
+    }
+    exposed
+}
+
+fn calculate_bulk_walls(subregions: &Vec<SubRegion>) -> i32 {
+    let mut bulk_perimeter = 0;
+
+    let mut left_walls = vec![];
+    let mut right_walls = vec![];
+    let mut up_walls = vec![];
+    let mut down_walls = vec![];
+
+    for reg in subregions.iter() {
+        if reg.exposed_sides.up {
+            up_walls.push(reg);
+        }
+        if reg.exposed_sides.down {
+            down_walls.push(reg);
+        }
+        if reg.exposed_sides.left {
+            left_walls.push(reg);
+        }
+        if reg.exposed_sides.right {
+            right_walls.push(reg);
+        }
+    }
+
+    left_walls.sort_by(|a, b| {
+        if a.coordinate.x != b.coordinate.x {
+            a.coordinate.x.cmp(&b.coordinate.x)
+        } else {
+            a.coordinate.y.cmp(&b.coordinate.y)
+        }
+    });
+    right_walls.sort_by(|a, b| {
+        if a.coordinate.x != b.coordinate.x {
+            a.coordinate.x.cmp(&b.coordinate.x)
+        } else {
+            a.coordinate.y.cmp(&b.coordinate.y)
+        }
+    });
+    up_walls.sort_by(|a, b| {
+        if a.coordinate.y != b.coordinate.y {
+            a.coordinate.y.cmp(&b.coordinate.y)
+        } else {
+            a.coordinate.x.cmp(&b.coordinate.x)
+        }
+    });
+    down_walls.sort_by(|a, b| {
+        if a.coordinate.y != b.coordinate.y {
+            a.coordinate.y.cmp(&b.coordinate.y)
+        } else {
+            a.coordinate.x.cmp(&b.coordinate.x)
+        }
+    });
+
+    let mut expected_coord = Coordinate{x: -1, y: -1};
+    for wall in left_walls.iter() {
+        if wall.coordinate != expected_coord {
+            bulk_perimeter += 1;
+        }
+        expected_coord = Coordinate{x: wall.coordinate.x, y: wall.coordinate.y + 1};
+    }
+
+    let mut expected_coord = Coordinate{x: -1, y: -1};
+    for wall in right_walls.iter() {
+        if wall.coordinate != expected_coord {
+            bulk_perimeter += 1;
+        }
+        expected_coord = Coordinate{x: wall.coordinate.x, y: wall.coordinate.y + 1};
+    }
+
+    let mut expected_coord = Coordinate{x: -1, y: -1};
+    for wall in up_walls.iter() {
+        if wall.coordinate != expected_coord {
+            bulk_perimeter += 1;
+        }
+        expected_coord = Coordinate{x: wall.coordinate.x + 1, y: wall.coordinate.y};
+    }
+
+    let mut expected_coord = Coordinate{x: -1, y: -1};
+    for wall in down_walls.iter() {
+        if wall.coordinate != expected_coord {
+            bulk_perimeter += 1;
+        }
+        expected_coord = Coordinate{x: wall.coordinate.x + 1, y: wall.coordinate.y};
+    }
+
+    bulk_perimeter
+}
+
+fn calculate_region_cost(region_map: &RegionMap, bulk: bool) -> u64 {
     let area = region_map.sub_regions.len();
-    let perimeter = region_map.sub_regions.iter().fold(0, |a, b| a + b.exposed_sides);
+    let perimeter: i32;
+
+    if bulk {
+        perimeter = calculate_bulk_walls(&region_map.sub_regions);
+    } else {
+        perimeter = region_map.sub_regions.iter().fold(0, |a, b| a + count_exposed_sides(&b.exposed_sides));
+    }
 
     log::debug!("Found region name {:?} with area of {:?} and perimeter of {:?}", region_map.region_code, area, perimeter);
     area as u64 * perimeter as u64
 }
 
-fn calculate_total_region_cost(region_map: &Vec<RegionMap>) -> u64 {
+fn calculate_total_region_cost(region_map: &Vec<RegionMap>, bulk: bool) -> u64 {
     let mut total_cost = 0;
     for region in region_map.iter() {
-        total_cost += calculate_region_cost(region);
+        total_cost += calculate_region_cost(region, bulk);
     }
     total_cost
 }
 
-pub(crate) fn explore_regions(region_map: &Vec<Vec<char>>) -> u64 {
+pub(crate) fn explore_regions(region_map: &Vec<Vec<char>>, bulk: bool) -> u64 {
     let mut discovered_regions: Vec<RegionMap> = vec![];
 
-    for (yIdx, row) in region_map.iter().enumerate() {
-        for (xIdx, cell) in row.iter().enumerate() {
-            let curr_coord = Coordinate{ x: xIdx as i8, y: yIdx as i8 };
+    for (y_idx, row) in region_map.iter().enumerate() {
+        for (x_idx, _) in row.iter().enumerate() {
+            let curr_coord = Coordinate{ x: x_idx as i32, y: y_idx as i32 };
             if !test_coord_in_regions(&discovered_regions, curr_coord) {
                 discovered_regions.push(explore_region(region_map, curr_coord));
             }
         }
     }
 
-    calculate_total_region_cost(&discovered_regions)
+    calculate_total_region_cost(&discovered_regions, bulk)
 }

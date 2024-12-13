@@ -49,6 +49,12 @@ MMMISSJEEE
 
 Has a total region cost of `1930`
 
+## Part two
+
+Part two states that straight lines count for a single side.
+
+The example above now has a total cost of `1206`.
+
 ## This script
 
 This script uses Rust and can be run with the following command:

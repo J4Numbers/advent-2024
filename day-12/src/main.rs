@@ -11,6 +11,9 @@ use clap::Parser;
 struct ProgArgs {
     #[arg(short, long)]
     input: String,
+
+    #[arg(long, default_value_t = false)]
+    bulk: bool,
 }
 
 /// Kick off the main program
@@ -26,7 +29,7 @@ fn main() {
 
     log::debug!("Initial file was {char_map:?}");
 
-    let total_value = region::explore_regions(&char_map);
+    let total_value = region::explore_regions(&char_map, args.bulk);
 
     log::info!("Total value of the map was {total_value:?}");
 }
