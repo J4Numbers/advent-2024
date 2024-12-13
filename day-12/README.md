@@ -64,3 +64,5 @@ cargo run -- -i input.txt
 ```
 
 Debug logging can be enabled with `RUST_LOG=debug` as a command prefix.
+
+To enable part two, add the `--bulk` flag.
