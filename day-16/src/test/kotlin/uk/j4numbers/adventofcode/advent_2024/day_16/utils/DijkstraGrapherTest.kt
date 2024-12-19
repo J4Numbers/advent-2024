@@ -1,4 +1,4 @@
-package uk.j4numers.adventofcode.advent_2024.day_16.utils
+package uk.j4numbers.adventofcode.advent_2024.day_16.utils
 
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
